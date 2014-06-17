@@ -95,10 +95,10 @@ void ThermalAnalyzer::initPowerMaps(int const& layers, Point const& die_outline)
 // Note that masks are 1D, sufficient for the separated convolution in
 // performPowerBlurring()
 void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskParameters const& parameters) {
-	int i, ii;
+    int i, ii, jj;
 	double scale;
 	double layer_impulse_factor;
-	int x_y;
+    int x, y;
 
 	if (ThermalAnalyzer::DBG_CALLS) {
 		cout << "-> ThermalAnalyzer::initThermalMasks(" << layers << ", " << log << ")" << endl;
@@ -111,13 +111,33 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
 
 	// reset mask arrays
 	this->thermal_masks.clear();
+    this->thermal_masks_x.clear();
+    this->thermal_masks_y.clear();
+    this->thermal_masks_tsv.clear();
+    this->thermal_masks_x2.clear();
+    this->thermal_masks_y2.clear();
 
 	// allocate mask arrays
-	for (i = 0; i < layers; i++) {
-		this->thermal_masks.emplace_back(
-			array<double,ThermalAnalyzer::THERMAL_MASK_DIM>()
-		);
-	}
+    for (i = 0; i < layers; i++) {
+            this->thermal_masks.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+            this->thermal_masks_x.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+            this->thermal_masks_y.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+            this->thermal_masks_tsv.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+            this->thermal_masks_x2.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+            this->thermal_masks_y2.emplace_back(
+                array<array<double,ThermalAnalyzer::THERMAL_MASK_DIM>,ThermalAnalyzer::THERMAL_MASK_DIM>()
+            );
+        }
 
 	// determine scale factor such that mask_boundary_value is reached at the
 	// boundary of the lowermost (2D) mask; based on general 2D gauss equation,
@@ -139,18 +159,50 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
 		// impulse factor is to be reduced notably for increasing layer count
 		layer_impulse_factor = parameters.impulse_factor / pow(i, parameters.impulse_factor_scaling_exponent);
 
-		ii = 0;
-		for (x_y = -ThermalAnalyzer::THERMAL_MASK_CENTER; x_y <= ThermalAnalyzer::THERMAL_MASK_CENTER; x_y++) {
-			// sqrt for impulse factor is mandatory since the mask is
-			// used for separated convolution (i.e., factor will be
-			// squared in final convolution result)
-			this->thermal_masks[i - 1][ii] = Math::gauss1D(x_y * scale, sqrt(layer_impulse_factor), SPREAD);
+        // ########### /Corblivar/Corblivar$ ./Corblivar n100 exp/Corblivar.conf exp/bench/ ###########
 
-			ii++;
-		}
+        // http://www.librow.com/articles/article-9
+
+        //Gauss mit e-Funktion in x-Richtung
+               cout << "Gauss in x-Richtung" << endl;
+               jj = 0;
+               for (y = -ThermalAnalyzer::THERMAL_MASK_CENTER; y <= ThermalAnalyzer::THERMAL_MASK_CENTER; y++) {
+                   ii = 0;
+                   for (x = -ThermalAnalyzer::THERMAL_MASK_CENTER; x <= ThermalAnalyzer::THERMAL_MASK_CENTER; x++) {
+                       this->thermal_masks_x[i - 1][ii][jj] = Math::gauss1D(x * scale, sqrt(layer_impulse_factor), SPREAD);
+                       this->thermal_masks_x2[i - 1][ii][jj] = Math::gauss1D(x * scale, sqrt(layer_impulse_factor), SPREAD);
+                       ii++;
+                   }
+                   jj++;
+               }
+               //Gauss mit e-Funktion in y Richtung
+               cout << "Gauss in y-Richtung" << endl;
+               ii = 0;
+               for (x = -ThermalAnalyzer::THERMAL_MASK_CENTER; x <= ThermalAnalyzer::THERMAL_MASK_CENTER; x++) {
+                   jj = 0;
+                   for (y = -ThermalAnalyzer::THERMAL_MASK_CENTER; y <= ThermalAnalyzer::THERMAL_MASK_CENTER; y++) {
+                       this->thermal_masks_y[i - 1][ii][jj] = Math::gauss1D(y * scale, sqrt(layer_impulse_factor), SPREAD);
+                       this->thermal_masks_y2[i - 1][ii][jj] = Math::gauss1D(y * scale, sqrt(layer_impulse_factor), SPREAD);
+                       jj++;
+                   }
+                   ii++;
+               }
+               //Zusammenfuehren der e-Funktion in x und y Richtung (iterative Multiplikation)
+               cout << "letzte Phase der Kernelerstellung" << endl;
+               ii= 0;
+               for (x = -ThermalAnalyzer::THERMAL_MASK_CENTER; x <= ThermalAnalyzer::THERMAL_MASK_CENTER; x++) {
+                   jj= 0;
+                   for (y = -ThermalAnalyzer::THERMAL_MASK_CENTER; y <= ThermalAnalyzer::THERMAL_MASK_CENTER; y++) {
+
+                       this->thermal_masks[i-1][ii][jj]=thermal_masks_x[i-1][ii][jj] * thermal_masks_y[i-1][ii][jj];
+                       this->thermal_masks_tsv[i-1][ii][jj]=thermal_masks_x[i-1][ii][jj] * thermal_masks_y[i-1][ii][jj];
+                       jj++;
+                   }
+                   ii++;
+               }
 	}
 
-	if (ThermalAnalyzer::DBG) {
+    /*if (ThermalAnalyzer::DBG) {
 		// enforce fixed digit count for printing mask
 		cout << fixed;
 		// dump mask
@@ -166,7 +218,7 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
 
 		cout << endl;
 		cout << "DBG> Note that these values will be multiplied w/ each other in the final 2D mask" << endl;
-	}
+    }*/
 
 	if (log) {
 		cout << "ThermalAnalyzer> ";
@@ -527,9 +579,7 @@ void ThermalAnalyzer::adaptPowerMaps(int const& layers, vector<TSV_Group> const&
 // Based on http://www.songho.ca/dsp/convolution/convolution.html#separable_convolution
 void ThermalAnalyzer::performPowerBlurring(Temp& ret, int const& layers, MaskParameters const& parameters) {
 	int layer;
-	int x, y, i;
-	int map_x, map_y;
-	int mask_i;
+    int x, y;
 	double max_temp, avg_temp;
 	// required as buffer for separated convolution; note that its dimensions
 	// corresponds to a power map, which is required to hold temporary results for 1D
@@ -558,9 +608,9 @@ void ThermalAnalyzer::performPowerBlurring(Temp& ret, int const& layers, MaskPar
 	/// note that no (kernel) flipping is required since the mask is symmetric
 	//
 	// start w/ horizontal convolution (with which to start doesn't matter actually)
-	for (layer = 0; layer < layers; layer++) {
+    for (layer = 0; layer < layers; layer++) {
 
-		// walk power-map grid for horizontal convolution; store into
+    /*	// walk power-map grid for horizontal convolution; store into
 		// thermal_map_tmp; note that during horizontal convolution we need to
 		// walk the full y-dimension related to the padded power map in order to
 		// reasonably model the thermal effect in the padding zone during
@@ -663,7 +713,65 @@ void ThermalAnalyzer::performPowerBlurring(Temp& ret, int const& layers, MaskPar
 				}
 			}
 		}
-	}
+    }*/
+
+    // 2D Convolution
+    int f, e, ii, jj, m, n, i, j;
+
+            for(i = ThermalAnalyzer::POWER_MAPS_PADDED_BINS; i < ThermalAnalyzer::THERMAL_MAP_DIM + ThermalAnalyzer::POWER_MAPS_PADDED_BINS; i++)              // rows
+            {
+                 f=i-ThermalAnalyzer::POWER_MAPS_PADDED_BINS;
+
+                for(j = ThermalAnalyzer::POWER_MAPS_PADDED_BINS; j < ThermalAnalyzer::THERMAL_MAP_DIM + ThermalAnalyzer::POWER_MAPS_PADDED_BINS; j++)          // columns
+                {
+                     e=j-ThermalAnalyzer::POWER_MAPS_PADDED_BINS;
+
+                     if(Math::randB())
+                    {
+
+                    for(m=0; m < THERMAL_MASK_DIM; m++)     // kernel rows
+                    {
+
+                        for(n=0; n < THERMAL_MASK_DIM; n++) // kernel columns
+                        {
+
+                            // index of input signal, used for checking boundary
+                          ii = i + (m - POWER_MAPS_PADDED_BINS);
+                          jj = j + (n - POWER_MAPS_PADDED_BINS);
+
+
+                            // ignore input samples which are out of bound
+                            if( ii >= 0 && ii < THERMAL_MAP_DIM && jj >= 0 && jj < THERMAL_MAP_DIM )
+
+                                this->thermal_map[f][e] += this->power_maps[layer][ii][jj].power_density * this->thermal_masks[layer][m][n];
+                        }
+                    }
+                    }
+                    else
+                     {
+                         for(m=0; m < THERMAL_MASK_DIM; m++)     // kernel rows
+                         {
+
+                             for(n=0; n < THERMAL_MASK_DIM; n++) // kernel columns
+                             {
+
+                                 // index of input signal, used for checking boundary
+                               ii = i + (m - POWER_MAPS_PADDED_BINS);
+                               jj = j + (n - POWER_MAPS_PADDED_BINS);
+
+
+                                 // ignore input samples which are out of bound
+                                 if( ii >= 0 && ii < THERMAL_MAP_DIM && jj >= 0 && jj < THERMAL_MAP_DIM )
+
+                                     this->thermal_map[f][e] += this->power_maps[layer][ii][jj].power_density * this->thermal_masks_tsv[layer][m][n];
+                             }
+                         }
+                     }
+                }
+            }
+
+}
+
 
 	// determine max and avg value
 	max_temp = avg_temp = 0.0;
@@ -673,7 +781,7 @@ void ThermalAnalyzer::performPowerBlurring(Temp& ret, int const& layers, MaskPar
 			avg_temp += this->thermal_map[x][y];
 		}
 	}
-	avg_temp /= pow(ThermalAnalyzer::THERMAL_MAP_DIM, 2);
+    avg_temp /= pow(ThermalAnalyzer::THERMAL_MAP_DIM, 2);
 
 	// determine cost: max temp estimation, weighted w/ avg temp
 	ret.cost_temp = avg_temp * max_temp;

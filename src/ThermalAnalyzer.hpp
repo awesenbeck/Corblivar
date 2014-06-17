@@ -86,7 +86,19 @@ class ThermalAnalyzer {
 		// thermal_masks[1] relates to the mask for layer 0 obtained by
 		// considering heat source in layer 1 and so forth.  Note that the masks
 		// are only 1D for the separated convolution.
-		vector< array<double,THERMAL_MASK_DIM> > thermal_masks;
+
+        //2D thermal masks and maps
+        // thermal_masks[layer][direction_x][direction_y]
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks;
+        // two additionally masks necessary for creating the 2D Gaussian kernel with Math::gauss1D()
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks_x;
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks_y;
+        //thermal masks for TSV area
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks_tsv;
+        // two additionally masks necessary for creating the 2D Gaussian kernel with Math::gauss1D()
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks_x2;
+        vector< array<array<double,THERMAL_MASK_DIM>,THERMAL_MASK_DIM> > thermal_masks_y2;
+
 		// power_maps[i][x][y], whereas power_maps[0] relates to the map for layer
 		// 0 and so forth.
 		vector< array<array<PowerMapBin, POWER_MAPS_DIM>, POWER_MAPS_DIM> > power_maps;
