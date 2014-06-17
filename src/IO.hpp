@@ -38,10 +38,8 @@ class IO {
 
 	// private data, functions
 	private:
-		static constexpr int CONFIG_VERSION = 13;
-
-		// factor to scale um downto m;
-		static constexpr double SCALE_UM_M = 1.0e-06;
+		static constexpr int CONFIG_VERSION = 14;
+		static constexpr int TECHNOLOGY_VERSION = 2;
 
 	// constructors, destructors, if any non-implicit
 	// private in order to avoid instances of ``static'' class
@@ -51,9 +49,6 @@ class IO {
 
 	// public data, functions
 	public:
-		enum class Mode : unsigned {REGULAR, THERMAL_ANALYSIS};
-		static Mode mode;
-
 		static void parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv);
 		static void parseBlocks(FloorPlanner& fp);
 		static void parseAlignmentRequests(FloorPlanner& fp, vector<CorblivarAlignmentReq>& alignments);
