@@ -34,15 +34,15 @@ echo "initial Corblivar run; try to obtain solution"
 
 while :
 do
-#	$CORBLIVAR_BIN $BENCH $CONFIG_FILE $BENCH_DIR
+	$CORBLIVAR_BIN $BENCH $CONFIG_FILE $BENCH_DIR
 
-#	file $BENCH".solution" > /dev/null
+	file $BENCH".solution" > /dev/null
 	
 	# only abort (infinite) loop when solution file exists, i.e., initial Corblivar
 # run was successful
-#	if [ "$?" == "0" ]; then
+	if [ "$?" == "0" ]; then
 		break;
-#	fi
+	fi
 done
 
 echo "copy Octave scripts; required for separate working directories"
@@ -78,12 +78,12 @@ echo "start Octave scripts in parallel, running in separate working directories"
 cd $WORK_DIR_1
 # the notation ${CONFIG_FILE##*/} delivers the filename w/o full path
 echo "working dir 1 (w/o TSVs): `pwd`";
-echo octave optimization.m $BENCH $WORK_DIR_1"/"${CONFIG_FILE##*/} $ROOT_DIR 0 &
+octave optimization.m $BENCH $WORK_DIR_1"/"${CONFIG_FILE##*/} $ROOT_DIR 0 &
 PID1=$!
 
 cd $WORK_DIR_2
 echo "working dir 2 (w/ TSVs): `pwd`";
-echo octave optimization.m $BENCH $WORK_DIR_2"/"${CONFIG_FILE##*/} $ROOT_DIR 100 &
+octave optimization.m $BENCH $WORK_DIR_2"/"${CONFIG_FILE##*/} $ROOT_DIR 100 &
 PID2=$!
 
 while :
