@@ -49,6 +49,14 @@ class ThermalAnalyzer {
 			double power_density_scaling_padding_zone;
 			double power_density_scaling_TSV_region;
 			double temp_offset;
+
+            double TSV_density_TSV;
+            double mask_boundary_value_TSV;
+            double impulse_factor_TSV;
+            double impulse_factor_scaling_exponent_TSV;
+            double power_density_scaling_padding_zone_TSV;
+            double power_density_scaling_TSV_region_TSV;
+            double temp_offset_TSV;
 		};
 		struct PowerMapBin {
 			double power_density;

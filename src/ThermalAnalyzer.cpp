@@ -96,8 +96,9 @@ void ThermalAnalyzer::initPowerMaps(int const& layers, Point const& die_outline)
 // performPowerBlurring()
 void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskParameters const& parameters) {
     int i, ii, jj;
-	double scale;
+    double scale, scale_TSV;
 	double layer_impulse_factor;
+    double layer_impulse_factor_TSV;
     int x, y;
 
 	if (ThermalAnalyzer::DBG_CALLS) {
@@ -149,7 +150,8 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
 	// function is defined by the impulse factor, the minimum by the
 	// mask_boundary_value
 	scale = sqrt(SPREAD * std::log(parameters.impulse_factor / (parameters.mask_boundary_value))) / sqrt(2.0);
-	// normalize factor according to half of mask dimension; i.e., fit spreading of
+    scale_TSV = sqrt(SPREAD * std::log(parameters.impulse_factor_TSV / (parameters.mask_boundary_value_TSV))) / sqrt(2.0);
+    // normalize factor according to half of mask dimension; i.e., fit spreading of
 	// exp function
 	scale /=  ThermalAnalyzer::THERMAL_MASK_CENTER;
 
@@ -158,6 +160,7 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
 
 		// impulse factor is to be reduced notably for increasing layer count
 		layer_impulse_factor = parameters.impulse_factor / pow(i, parameters.impulse_factor_scaling_exponent);
+        layer_impulse_factor_TSV = parameters.impulse_factor_TSV / pow(i, parameters.impulse_factor_scaling_exponent_TSV);
 
         // ########### /Corblivar/Corblivar$ ./Corblivar n100 exp/Corblivar.conf exp/bench/ ###########
 
@@ -170,7 +173,7 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
                    ii = 0;
                    for (x = -ThermalAnalyzer::THERMAL_MASK_CENTER; x <= ThermalAnalyzer::THERMAL_MASK_CENTER; x++) {
                        this->thermal_masks_x[i - 1][ii][jj] = Math::gauss1D(x * scale, sqrt(layer_impulse_factor), SPREAD);
-                       this->thermal_masks_x2[i - 1][ii][jj] = Math::gauss1D(x * scale, sqrt(layer_impulse_factor), SPREAD);
+                       this->thermal_masks_x2[i - 1][ii][jj] = Math::gauss1D(x * scale_TSV, sqrt(layer_impulse_factor_TSV), SPREAD);
                        ii++;
                    }
                    jj++;
@@ -182,7 +185,7 @@ void ThermalAnalyzer::initThermalMasks(int const& layers, bool const& log, MaskP
                    jj = 0;
                    for (y = -ThermalAnalyzer::THERMAL_MASK_CENTER; y <= ThermalAnalyzer::THERMAL_MASK_CENTER; y++) {
                        this->thermal_masks_y[i - 1][ii][jj] = Math::gauss1D(y * scale, sqrt(layer_impulse_factor), SPREAD);
-                       this->thermal_masks_y2[i - 1][ii][jj] = Math::gauss1D(y * scale, sqrt(layer_impulse_factor), SPREAD);
+                       this->thermal_masks_y2[i - 1][ii][jj] = Math::gauss1D(y * scale_TSV, sqrt(layer_impulse_factor_TSV), SPREAD);
                        jj++;
                    }
                    ii++;
@@ -727,42 +730,32 @@ void ThermalAnalyzer::performPowerBlurring(Temp& ret, int const& layers, MaskPar
                 {
                      e=j-ThermalAnalyzer::POWER_MAPS_PADDED_BINS;
 
+                     for(m=0; m < THERMAL_MASK_DIM; m++)     // kernel rows
+                     {
+
+                         for(n=0; n < THERMAL_MASK_DIM; n++) // kernel columns
+                         {
+
+                             // index of input signal, used for checking boundary
+                           ii = i + (m - POWER_MAPS_PADDED_BINS);
+                           jj = j + (n - POWER_MAPS_PADDED_BINS);
+
+
+                             // ignore input samples which are out of bound
+                             if( ii >= 0 && ii < THERMAL_MAP_DIM && jj >= 0 && jj < THERMAL_MAP_DIM )
+
+
                      if(Math::randB())
                     {
 
-                    for(m=0; m < THERMAL_MASK_DIM; m++)     // kernel rows
-                    {
 
-                        for(n=0; n < THERMAL_MASK_DIM; n++) // kernel columns
-                        {
-
-                            // index of input signal, used for checking boundary
-                          ii = i + (m - POWER_MAPS_PADDED_BINS);
-                          jj = j + (n - POWER_MAPS_PADDED_BINS);
-
-
-                            // ignore input samples which are out of bound
-                            if( ii >= 0 && ii < THERMAL_MAP_DIM && jj >= 0 && jj < THERMAL_MAP_DIM )
 
                                 this->thermal_map[f][e] += this->power_maps[layer][ii][jj].power_density * this->thermal_masks[layer][m][n];
                         }
-                    }
-                    }
+
                     else
                      {
-                         for(m=0; m < THERMAL_MASK_DIM; m++)     // kernel rows
-                         {
 
-                             for(n=0; n < THERMAL_MASK_DIM; n++) // kernel columns
-                             {
-
-                                 // index of input signal, used for checking boundary
-                               ii = i + (m - POWER_MAPS_PADDED_BINS);
-                               jj = j + (n - POWER_MAPS_PADDED_BINS);
-
-
-                                 // ignore input samples which are out of bound
-                                 if( ii >= 0 && ii < THERMAL_MAP_DIM && jj >= 0 && jj < THERMAL_MAP_DIM )
 
                                      this->thermal_map[f][e] += this->power_maps[layer][ii][jj].power_density * this->thermal_masks_tsv[layer][m][n];
                              }

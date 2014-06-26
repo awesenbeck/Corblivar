@@ -36,7 +36,7 @@
 void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 	int file_version;
 	ifstream in;
-	string config_file, technology_file;
+    string config_file, config_file_TSV, technology_file;
 	stringstream results_file;
 	stringstream blocks_file;
 	stringstream alignments_file;
@@ -47,7 +47,7 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 	ThermalAnalyzer::MaskParameters mask_parameters;
 
 	// print command-line parameters
-	if (argc < 4) {
+    if (argc < 4) {
 		cout << "IO> Usage: " << argv[0] << " benchmark_name config_file benchmarks_dir [solution_file] [TSV_density]" << endl;
 		cout << "IO> " << endl;
 		cout << "IO> Mandatory parameter ``benchmark_name'': any name, should refer to GSRC-Bookshelf benchmark" << endl;
@@ -71,6 +71,7 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 	fp.benchmark = argv[1];
 
 	config_file = argv[2];
+
 
 	blocks_file << argv[3] << fp.benchmark << ".blocks";
 	fp.IO_conf.blocks_file = blocks_file.str();
@@ -424,6 +425,272 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 		cout << "IO> Provide a positive temperature offset!" << endl;
 		exit(1);
 	}
+
+//########################################################################## Anfang
+
+    in.close();
+
+    config_file_TSV = config_file + "_TSVs";
+    // config file parsing
+    //
+    in.open(config_file_TSV.c_str());
+    if (!in.good()) {
+        cout << "IO> ";
+        cout << "No such config file: " << config_file_TSV << endl;
+        exit(1);
+    }
+
+    if (fp.logMin()) {
+        cout << "IO> Parsing config_tsv file ..." << endl;
+    }
+
+    // reset tmpstr
+    tmpstr = "";
+
+    // sanity check for file version
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> file_version;
+
+/*	if (file_version != IO::CONFIG_VERSION) {
+        cout << "IO> Wrong version of config file; required version is \"" << IO::CONFIG_VERSION << "\"; consider using matching config file!" << endl;
+        exit(1);
+    }
+*/
+    // parse in config parameters
+    //
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> technology_file;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.log;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.layout_enhanced_hard_block_rotation;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.layout_enhanced_soft_block_shaping;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.layout_packing_iterations;
+    tmpstr = "";
+
+/*    // sanity check for packing iterations
+    if (fp.SA_parameters.layout_packing_iterations < 0) {
+        cout << "IO> Provide a positive packing iterations count or set 0 to disable!" << endl;
+        exit(1);
+    }
+
+    // sanity check for packing and block rotation
+    if (fp.SA_parameters.layout_enhanced_hard_block_rotation && (fp.SA_parameters.layout_packing_iterations > 0)) {
+        cout << "IO> Activate only guided hard block rotation OR layout packing; both cannot be performed!" << endl;
+        exit(1);
+    }
+*/
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.layout_power_aware_block_handling;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.layout_floorplacement;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.loopFactor;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.loopLimit;
+    tmpstr = "";
+
+/*    // sanity check for positive, non-zero parameters
+    if (fp.SA_parameters.loopFactor <= 0.0 || fp.SA_parameters.loopLimit <= 0.0) {
+        cout << "IO> Provide positive, non-zero SA loop parameters!" << endl;
+        exit(1);
+    }
+*/
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.temp_init_factor;
+    tmpstr = "";
+
+/*    // sanity check for positive, non-zero factor
+    if (fp.SA_parameters.temp_init_factor <= 0.0) {
+        cout << "IO> Provide positive, non-zero SA start temperature scaling factor!" << endl;
+        exit(1);
+    }
+*/
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.temp_factor_phase1;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.temp_factor_phase1_limit;
+    tmpstr = "";
+
+/*    // sanity check for dependent temperature-scaling factors
+    if (fp.SA_parameters.temp_factor_phase1 >= fp.SA_parameters.temp_factor_phase1_limit) {
+        cout << "IO> Initial cooling factor for SA phase 1 should be smaller than the related final factor!" << endl;
+        exit(1);
+    }
+*/
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.temp_factor_phase2;
+    tmpstr = "";
+
+/*    // sanity check for positive, non-zero parameters
+    if (fp.SA_parameters.temp_factor_phase1 <= 0.0 || fp.SA_parameters.temp_factor_phase2 <= 0.0) {
+        cout << "IO> Provide positive, non-zero SA cooling factors for phases 1 and 2!" << endl;
+        exit(1);
+    }
+*/
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.temp_factor_phase3;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.cost_thermal;
+    tmpstr = "";
+
+    // memorize if thermal optimization should be performed
+//    fp.SA_parameters.opt_thermal = (fp.SA_parameters.cost_thermal > 0.0 && fp.IO_conf.power_density_file_avail);
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.cost_WL;
+    tmpstr = "";
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.cost_TSVs;
+    tmpstr = "";
+
+    // memorize if interconnects optimization should be performed
+//    fp.SA_parameters.opt_interconnects = (fp.SA_parameters.cost_WL > 0.0 || fp.SA_parameters.cost_TSVs > 0.0);
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+//    in >> fp.SA_parameters.cost_alignment;
+    tmpstr = "";
+
+    // memorize if alignment optimization should be performed
+//    fp.SA_parameters.opt_alignment = (fp.SA_parameters.cost_alignment > 0.0 && fp.IO_conf.alignments_file_avail);
+
+ /*   // sanity check for positive cost factors
+    if (fp.SA_parameters.cost_thermal < 0.0 || fp.SA_parameters.cost_WL < 0.0 || fp.SA_parameters.cost_TSVs < 0.0 || fp.SA_parameters.cost_alignment < 0.0) {
+        cout << "IO> Provide positive cost factors!" << endl;
+        exit(1);
+    }
+
+    // sanity check for sum of cost factors
+    if (abs(fp.SA_parameters.cost_thermal + fp.SA_parameters.cost_WL + fp.SA_parameters.cost_TSVs + fp.SA_parameters.cost_alignment - 1.0) > 0.1) {
+        cout << "IO> Cost factors should sum up to approx. 1!" << endl;
+        exit(1);
+    }
+*/
+    // thermal-analysis parameters
+    //
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.impulse_factor_TSV;
+    cout << mask_parameters.impulse_factor_TSV << endl;
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.impulse_factor_scaling_exponent_TSV;
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.mask_boundary_value_TSV;
+
+    // sanity check for positive, non-zero parameters
+    if (mask_parameters.impulse_factor_TSV <= 0.0) {
+        cout << "IO> Provide a positive, non-zero power blurring TSV impulse factor!" << endl;
+        exit(1);
+    }
+    if (mask_parameters.mask_boundary_value_TSV <= 0.0) {
+        cout << "IO> Provide a positive, non-zero power blurring TSV mask boundary value!" << endl;
+        exit(1);
+    }
+
+    // sanity check for reasonable mask parameters
+    if (mask_parameters.impulse_factor_TSV <= mask_parameters.mask_boundary_value_TSV) {
+        cout << "IO> Provide a TSV power blurring impulse factor larger than the power blurring mask boundary value!" << endl;
+        exit(1);
+    }
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.power_density_scaling_padding_zone_TSV;
+
+    // sanity check for positive parameter
+    if (mask_parameters.power_density_scaling_padding_zone_TSV < 1.0) {
+        cout << "IO> Provide a positive (greater or equal 1.0) TSV power-density scaling factor!" << endl;
+        exit(1);
+    }
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.power_density_scaling_TSV_region_TSV;
+
+    // sanity check for parameter range
+    if (mask_parameters.power_density_scaling_TSV_region_TSV > 1.0 || mask_parameters.power_density_scaling_TSV_region_TSV < 0.0) {
+        cout << "IO> Provide a power-density down-scaling factor for TSV regions between 0.0 and 1.0!" << endl;
+        exit(1);
+    }
+
+    in >> tmpstr;
+    while (tmpstr != "value" && !in.eof())
+        in >> tmpstr;
+    in >> mask_parameters.temp_offset_TSV;
+
+    // sanity check for positive parameter
+    if (mask_parameters.temp_offset_TSV < 0.0) {
+        cout << "IO> Provide a positive temperature offset!" << endl;
+        exit(1);
+    }
+//########################################################################## ende
 
 	// store power-blurring parameters
 	fp.power_blurring_parameters = mask_parameters;
