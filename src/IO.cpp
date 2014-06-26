@@ -35,6 +35,7 @@
 // parse program parameter, config file, and further files
 void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 	int file_version;
+	size_t last_slash;
 	ifstream in;
     string config_file, config_file_TSV, technology_file;
 	stringstream results_file;
@@ -68,6 +69,7 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 		fp.thermal_analyser_run = false;
 	}
 
+	// read in mandatory parameters
 	fp.benchmark = argv[1];
 
 	config_file = argv[2];
@@ -90,6 +92,15 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 
 	results_file << fp.benchmark << ".results";
 	fp.IO_conf.results.open(results_file.str().c_str());
+
+	// determine path of technology file; same as config file per definition
+	last_slash = config_file.find_last_of('/');
+	if (last_slash == string::npos) {
+		technology_file = "";
+	}
+	else {
+		technology_file = config_file.substr(0, last_slash) + "/";
+	}
 
 	// assume minimal log level; actual level to be parsed later on
 	fp.log = FloorPlanner::LOG_MINIMAL;
@@ -216,7 +227,9 @@ void IO::parseParametersFiles(FloorPlanner& fp, int const& argc, char** argv) {
 	in >> tmpstr;
 	while (tmpstr != "value" && !in.eof())
 		in >> tmpstr;
-	in >> technology_file;
+	in >> tmpstr;
+	// append file name to already defined path of technology file
+	technology_file += tmpstr;
 
 	in >> tmpstr;
 	while (tmpstr != "value" && !in.eof())
@@ -1323,7 +1336,10 @@ void IO::parseBlocks(FloorPlanner& fp) {
 				// GSRC benchmarks provide power density in 10^5 W/m^2
 				// which equals 10^-1 uW/um^2; scale by factor 10 in order
 				// to obtain uW/um^2
-				new_block.power_density *= 10.0;
+				//
+				// (TODO) scaling up ignored in order to limit
+				// power-density to reasonable values
+				//new_block.power_density *= 10.0;
 			}
 			else {
 				if (fp.logMin()) {
